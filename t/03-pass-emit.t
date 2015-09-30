@@ -11,16 +11,29 @@ use Orr::Backend::GCCJIT;
 
 use_ok("Orr::Pass::Emit");
 
-my $backend = Orr::Backend::GCCJIT->new();
+sub try {
+    my ($name, $code, @args) = @_;
 
-my $tree = B::ExprTree::build(sub { 42 });
-my $type = Orr::Pass::Type::process($tree);
-my $code = Orr::Pass::Emit::process($tree, $backend);
+    my $backend = Orr::Backend::GCCJIT->new();
+    my $tree = B::ExprTree::build($code);
+    Orr::Pass::Type::process($tree);
+    Orr::Pass::Emit::process($tree, $backend);
 
-my $res = $backend->compile();
-my $ptr = $res->get_code("anon");
-DynaLoader::dl_install_xsub("test_xsub", $ptr);
+    my $res = $backend->compile();
+    my $ptr = $res->get_code("anon");
 
-is test_xsub(), 42;
+    my $sub = do {
+        no warnings "redefine";
+        DynaLoader::dl_install_xsub("anon", $ptr);
+    };
+
+    my @ret = $sub->(@args);
+    my @exp = $code->(@args);
+
+    is_deeply \@ret, \@exp, $name;
+}
+
+try "const iv", sub { 42 };
+try "const nv", sub { -1.5e-1 };
 
 done_testing;
