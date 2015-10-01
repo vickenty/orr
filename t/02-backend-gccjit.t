@@ -10,7 +10,7 @@ my $b = Orr::Backend::GCCJIT->new();
 can_ok($b, qw/new_xsub compile get_code/);
 
 my $x = $b->new_xsub("test_xsub");
-$b->block_return($x, $x->{preamble}, $b->new_nv(42));
+$x->return($b->new_const_float(42));
 
 my $res = $b->compile();
 my $ptr = $b->get_code($res, "test_xsub");

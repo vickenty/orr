@@ -89,14 +89,6 @@ sub new_block {
     return $function->new_block($name);
 }
 
-sub new_nv {
-    my ($self, $value) = @_;
-    return {
-        type => "nv",
-        value => $self->{ctx}->new_rvalue_from_double($self->get_jit_type("nv"), $value),
-    };
-}
-
 sub new_const_float {
     my ($self, $value) = @_;
     return {
