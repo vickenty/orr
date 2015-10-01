@@ -61,6 +61,7 @@ sub {
     return "float";
 };
 
+$ops{abs} =
 $ops{negate} =
 sub {
     my ($env, $op) = @_;
