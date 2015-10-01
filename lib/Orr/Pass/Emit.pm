@@ -12,8 +12,8 @@ $ops{const} = sub {
 
     my $value = $op->{pad_entry}{value};
     my $name = "new_const_$op->{type}";
-    if (my $ctor = $env->{backend}->can($name)) {
-        return $env->{backend}->$ctor($$value);
+    if (my $ctor = $env->{fun}->can($name)) {
+        return $env->{fun}->$ctor($$value);
     }
     else {
         my $type = $op->{type} // "<undef>";
@@ -36,17 +36,38 @@ $ops{lineseq} = sub {
     return $value;
 };
 
+$ops{sassign} = sub {
+    my ($env, $op) = @_;
+
+    my $lvalue = walk($env, $op->{lvalue});
+    my $rvalue = walk($env, $op->{rvalue});
+
+    $env->{fun}->assign($lvalue, $rvalue);
+
+    return $lvalue;
+};
+
+$ops{padsv} = sub {
+    my ($env, $op) = @_;
+
+    my $pe = $op->{pad_entry};
+    die "unsupported outer variable: $pe->{name}" if $pe->{outer};
+
+    return $pe->{lvalue} //= $env->{fun}->new_local($pe->{type});
+};
+
 sub process {
     my ($tree, $backend) = @_;
 
     my $env = {
         ops => \%ops,
-        backend => $backend,
         fun => $backend->new_xsub("anon"),
     };
 
     my $retval = walk($env, $tree->{root});
-    $backend->block_return($env->{fun}, $env->{fun}{preamble}, $retval);
+    $env->{fun}->return($retval);
 
     return $env->{fun};
 }
+
+1;

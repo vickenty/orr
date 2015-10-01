@@ -7,6 +7,9 @@ use GCCJIT qw/:all/;
 use GCCJIT::Context;
 use Ouroboros qw/:all/;
 
+use Orr::Backend::GCCJIT::Function;
+use Orr::Backend::GCCJIT::Util qw/cast_to/;
+
 my %default_typemap = (
     # Types used internally by the backend.
     void => GCC_JIT_TYPE_VOID,
@@ -97,21 +100,12 @@ sub new_const_float {
     };
 }
 
-sub cast_to {
-    my ($dst_type, $arg) = @_;
-
-    return [ map cast_to($dst_type, $_), @$arg ] if ref $arg eq "ARRAY";
-
-    my $class = ref $arg;
-    my ($src_type) = $class =~ /^gcc_jit_(\w+)Ptr$/;
-    die "unsupported arg type $class" unless $src_type;
-
-    return $arg if $src_type eq $dst_type;
-
-    my $name = "as_${dst_type}";
-    my $impl = $arg->can($name) or die "cannot cast $src_type into $dst_type";
-
-    return $impl->($arg);
+sub new_local {
+    my ($self, $fun, $type, $name) = @_;
+    return {
+        type => $type,
+        value => $fun->{function}->new_local(undef, $self->get_jit_type($type), $name),
+    };
 }
 
 my %shim_type = (
@@ -154,47 +148,10 @@ sub block_end {
     $block->end_with_void_return(undef);
 }
 
-my %shim_for_type = ( float => "nv" );
-sub auto_push {
-    my ($self, $xsub, $block, $value) = @_;
-    my $type = $value->{type};
-    $type = $shim_for_type{$type} // $type;
-    my $name = "stack_xpush_$type";
-    $self->eval_shim($block, $name, $xsub->{perl}, $xsub->{stack}, cast_to("rvalue", $value->{value}));
-}
-
-sub block_return {
-    my ($self, $xsub, $block, @values) = @_;
-    $self->eval_shim($block, "stack_prepush", $xsub->{perl}, $xsub->{stack});
-    $self->auto_push($xsub, $block, $_) foreach @values;
-    $self->eval_shim($block, "stack_putback", $xsub->{perl}, $xsub->{stack});
-    $self->block_end($block);
-}
-
 sub new_xsub {
     my ($self, $name) = @_;
 
-    my $perl = $self->new_param(perl_ptr => "perl");
-    my $cv = $self->new_param(cv => "cv");
-    my $function = $self->new_function(void => $name, [ $perl, $cv ]);
-    my ($preamble, $stack) = $self->new_xsub_preamble($function, $perl);
-
-    return {
-        function => $function,
-        preamble => $preamble,
-        perl => $perl,
-        cv => $cv,
-        stack => $stack,
-    };
-}
-
-sub new_xsub_preamble {
-    my ($self, $function, $perl) = @_;
-    my $stack_value = $function->new_local(undef, $self->get_jit_type("stack"), "stack");
-    my $stack = $stack_value->get_address(undef);
-    my $preamble = $self->new_block($function, "preamble");
-    $self->eval_shim($preamble, "stack_init", $perl, $stack);
-    return ($preamble, $stack);
+    return Orr::Backend::GCCJIT::Function->create($self, $name);
 }
 
 sub compile {
