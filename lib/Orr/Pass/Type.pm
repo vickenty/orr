@@ -14,7 +14,13 @@ sub walk {
 sub assert_type {
     my ($op, $type, @allow) = @_;
     local $" = ", ";
-    die "Type: $op->{op}: argument type $type is not one of allowed types (@allow)"
+
+    my $at = "";
+    if (my $loc = $op->{location}) {
+        $at = " at $loc->{file} line $loc->{line}";
+    }
+
+    die "Type: $op->{op}: argument type $type is not one of allowed types (@allow)$at"
         unless grep { $_ eq $type } @allow;
 }
 
@@ -137,8 +143,7 @@ $ops{sassign} = sub {
     my $rvalue = walk($env, $op->{rvalue});
     my $lvalue = walk($env, $op->{lvalue}, type => $rvalue);
 
-    die "Type: incompatible in assignment: $lvalue = $rvalue"
-        unless $lvalue eq $rvalue;
+    assert_type($op, $rvalue, $lvalue);
 
     return $rvalue;
 };
