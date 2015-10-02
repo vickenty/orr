@@ -11,16 +11,23 @@ sub walk {
     return $op->{type} = $type;
 }
 
-sub assert_type {
-    my ($op, $type, @allow) = @_;
-    local $" = ", ";
+sub throw {
+    my ($op, $message) = @_;
 
-    my $at = "";
     if (my $loc = $op->{location}) {
-        $at = " at $loc->{file} line $loc->{line}";
+        $message .= " at $loc->{file} line $loc->{line}";
+    } else {
+        $message .= " at unknown location";
     }
 
-    die "Type: $op->{op}: argument type $type is not one of allowed types (@allow)$at"
+    die "Type: $op->{op}: $message";
+}
+
+sub assert_type {
+    my ($op, $type, @allow) = @_;
+
+    local $" = ", ";
+    throw($op, "argument type $type is not one of allowed types (@allow)")
         unless grep { $_ eq $type } @allow;
 }
 
@@ -47,7 +54,7 @@ $ops{const} = sub {
     return "float" if $flags & (B::SVf_IOK | B::SVf_NOK);
     return "string" if $flags & B::SVf_POK;
 
-    die "Type: invalid constant: $$val";
+    throw($op, "invalid constant: $$val");
 };
 
 $ops{add} =
@@ -94,8 +101,7 @@ $ops{cond_expr} = sub {
     my $then = walk($env, $op->{then});
     my $else = walk($env, $op->{else});
 
-    die "Type: incompatible types in cond branches: $then, $else"
-        unless $then eq $else;
+    assert_type($op, $else, $then);
 
     return $then;
 };
@@ -154,10 +160,10 @@ $ops{aassign} = sub {
     my $rvalue = walk($env, $op->{rvalue});
     my $lvalue = walk($env, $op->{lvalue}, type => $rvalue);
 
-    die "Ouch: aassign: bad rvalue type $rvalue"
+    throw($op, "bad rvalue type $rvalue")
         unless ref $rvalue eq "ARRAY";
 
-    die "Ouch: aassign: bad lvalue type $lvalue"
+    throw($op, "bad lvalue type $lvalue")
         unless ref $lvalue eq "ARRAY";
 
     my ($lp, $rp) = (0, 0);
@@ -165,11 +171,10 @@ $ops{aassign} = sub {
         my $lt = $lvalue->[$lp++];
         my $rt = ($rvalue->[$rp] // "") eq "array" ? "sv" : $rvalue->[$rp++];
 
-        die "Type: insufficient elements on rhs of list assignment"
+        throw($op, "insufficient elements on rhs of list assignment")
             unless $rt;
 
-        die "Type: incompatible types in list assignment: $lt = $rt"
-            unless $lt eq $rt;
+        assert_type($op, $rt, $lt);
     }
 
     return $rvalue;
@@ -180,7 +185,7 @@ $ops{list} = sub {
 
     my $env_type = $env->{type};
 
-    die "Ouch: list: bad context type for list: $env_type"
+    throw($op, "bad context type for list: $env_type")
         unless $env_type eq "sv" || ref $env_type eq "ARRAY";
 
     my @type = ref $env_type ? @$env_type : "array";
