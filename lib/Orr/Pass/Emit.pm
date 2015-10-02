@@ -42,7 +42,7 @@ $ops{sassign} = sub {
     my $lvalue = walk($env, $op->{lvalue});
     my $rvalue = walk($env, $op->{rvalue});
 
-    $env->{fun}->assign($lvalue, $rvalue);
+    $env->{fun}->add_assignment($lvalue, $rvalue);
 
     return $lvalue;
 };
@@ -53,7 +53,7 @@ $ops{padsv} = sub {
     my $pe = $op->{pad_entry};
     die "unsupported outer variable: $pe->{name}" if $pe->{outer};
 
-    return $pe->{lvalue} //= $env->{fun}->new_local($pe->{type});
+    return $pe->{lvalue} //= $env->{fun}->new_local($pe->{type}, $pe->{name});
 };
 
 sub process {

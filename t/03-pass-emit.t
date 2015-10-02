@@ -35,5 +35,6 @@ sub try {
 
 try "const iv", sub { 42 };
 try "const nv", sub { -1.5e-1 };
+try "sassign", sub { my $x = 42; my $y = $x; $y };
 
 done_testing;

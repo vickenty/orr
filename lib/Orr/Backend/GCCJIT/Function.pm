@@ -21,6 +21,7 @@ sub create {
         name => $name,
         perl => $perl,
         cv => $cv,
+        fn => $fn,
         stack => $stack,
         block => $block,
     }, $class;
@@ -46,9 +47,29 @@ sub return {
     $self->{block}->end_with_void_return(undef);
 }
 
+sub add_eval {
+    my ($self, $value) = @_;
+    $self->{block}->add_eval(undef, cast_to("rvalue", $value->{value}));
+}
+
 sub new_const_float {
     my ($self, $value) = @_;
     return $self->{backend}->new_const_float($value);
+}
+
+sub new_local {
+    my ($self, $type, $name) = @_;
+    $self->{backend}->new_local($self->{fn}, $type, $name);
+}
+
+sub add_assignment {
+    my ($self, $lval, $rval) = @_;
+    $self->{block}->add_assignment(undef, cast_to("lvalue", $lval->{value}), cast_to("rvalue", $rval->{value}));
+}
+
+sub stack_fetch {
+    my ($self, $index) = @_;
+    $self->{backend}->eval_shim($self->{block}, "stack_fetch", @$self{"perl", "stack"}, cast_to("rvalue", $index));
 }
 
 1;

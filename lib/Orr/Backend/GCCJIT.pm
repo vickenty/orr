@@ -92,20 +92,19 @@ sub new_block {
     return $function->new_block($name);
 }
 
+sub new_value {
+    my ($self, $type, $value) = @_;
+    return { type => $type, value => $value };
+}
+
 sub new_const_float {
     my ($self, $value) = @_;
-    return {
-        type => "float",
-        value => $self->{ctx}->new_rvalue_from_double($self->get_jit_type("float"), $value),
-    };
+    return $self->new_value("float", $self->{ctx}->new_rvalue_from_double($self->get_jit_type("float"), $value));
 }
 
 sub new_local {
     my ($self, $fun, $type, $name) = @_;
-    return {
-        type => $type,
-        value => $fun->{function}->new_local(undef, $self->get_jit_type($type), $name),
-    };
+    return $self->new_value($type, $fun->new_local(undef, $self->get_jit_type($type), $name));
 }
 
 my %shim_type = (
