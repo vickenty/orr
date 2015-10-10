@@ -14,7 +14,10 @@ sub types {
     my ($name, $code, $expect, %types) = @_;
 
     my $tree = B::ExprTree::build($code);
-    my $type = Orr::Pass::Type::process($tree);
+    my $type;
+
+    my $error = exception { $type = Orr::Pass::Type::process($tree) };
+    is $error, undef, "$name: types ok";
 
     # assume names are unique and strip sigils
     my %all_vars = map { substr($_->{name}, 1) => $_->{type} } @{$tree->{vars}};
