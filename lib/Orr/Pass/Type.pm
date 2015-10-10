@@ -24,11 +24,10 @@ sub throw {
 }
 
 sub assert_type {
-    my ($op, $type, @allow) = @_;
+    my ($op, $type, $allow) = @_;
 
-    local $" = ", ";
-    throw($op, "argument type $type is not one of allowed types (@allow)")
-        unless grep { $_ eq $type } @allow;
+    throw($op, "can not convert $type to $allow")
+        unless $type eq "sv" || $allow eq "sv" || $type eq $allow;
 }
 
 my %ops;
@@ -69,7 +68,7 @@ $ops{ge} =
 sub {
     my ($env, $op) = @_;
     my @args = map walk($env, $_, type => "float"), @{$op->{args}};
-    assert_type($op, $_, qw/float sv/) foreach @args;
+    assert_type($op, $_, "float") foreach @args;
 
     return "float";
 };
@@ -78,19 +77,19 @@ $ops{abs} =
 $ops{negate} =
 sub {
     my ($env, $op) = @_;
-    assert_type($op, walk($env, $op->{arg}, type => "float"), qw/float sv/);
+    assert_type($op, walk($env, $op->{arg}, type => "float"), "float");
     return "float";
 };
 
 $ops{rv2av} = sub {
     my ($env, $op) = @_;
-    assert_type($op, walk($env, $op->{arg}, type => "array"), qw/array sv/);
+    assert_type($op, walk($env, $op->{arg}, type => "array"), "array");
     return "array";
 };
 
 $ops{rv2hv} = sub {
     my ($env, $op) = @_;
-    assert_type($op, walk($env, $op->{arg}, type => "hash"), qw/hash sv/);
+    assert_type($op, walk($env, $op->{arg}, type => "hash"), "hash");
     return "hash";
 };
 
