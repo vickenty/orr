@@ -102,6 +102,13 @@ types "assign expr",
     y => "float",
     j => "float";
 
+types "assign aelem to float",
+    sub { my $i = $a[0]; $i + 1 } => "float",
+    i => "float";
+
+types "assign float to aelem",
+    sub { $a[0] = 1; } => "sv";
+
 types "sv upgrade",
     sub { $x = $h{foo}; $x + 1 } => "float",
     x => "float";
