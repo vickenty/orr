@@ -150,7 +150,7 @@ $ops{sassign} = sub {
 
     assert_type($op, $rvalue, $lvalue);
 
-    return $rvalue;
+    return $lvalue;
 };
 
 $ops{aassign} = sub {
