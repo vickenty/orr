@@ -128,6 +128,7 @@ $ops{aelem} = sub {
     return "sv";
 };
 
+$ops{aelemfast} =
 $ops{aelemfast_lex} = sub {
     my ($env, $op) = @_;
     return "sv";

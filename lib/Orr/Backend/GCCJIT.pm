@@ -97,6 +97,11 @@ sub new_value {
     return { type => $type, value => $value };
 }
 
+sub new_const_int {
+    my ($self, $value) = @_;
+    return $self->new_value("c_int", $self->{ctx}->new_rvalue_from_int($self->get_jit_type("c_int"), $value));
+}
+
 sub new_const_float {
     my ($self, $value) = @_;
     return $self->new_value("float", $self->{ctx}->new_rvalue_from_double($self->get_jit_type("float"), $value));
@@ -111,6 +116,7 @@ my %shim_type = (
     stack_init => [ qw/void perl_ptr stack_ptr/ ],
     stack_prepush => [ qw/void perl_ptr stack_ptr/ ],
     stack_putback => [ qw/void perl_ptr stack_ptr/ ],
+    stack_fetch => [ qw/sv perl_ptr stack_ptr c_int/ ],
 
     stack_xpush_sv => [ qw/void perl_ptr stack_ptr sv/ ],
     stack_xpush_nv => [ qw/void perl_ptr stack_ptr nv/ ],

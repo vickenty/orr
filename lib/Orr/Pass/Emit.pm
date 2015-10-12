@@ -56,6 +56,17 @@ $ops{padsv} = sub {
     return $pe->{lvalue} //= $env->{fun}->new_local($pe->{type}, $pe->{name});
 };
 
+$ops{aelemfast} = sub {
+    my ($env, $op) = @_;
+    my $val = $op->{pad_entry}{value};
+
+    die "\@_ is the only global array supported"
+        unless $val == \*_;
+
+    my $index = $env->{fun}->new_const_int($op->{index});
+    return $env->{fun}->stack_fetch($index->{value});
+};
+
 sub process {
     my ($tree, $backend) = @_;
 

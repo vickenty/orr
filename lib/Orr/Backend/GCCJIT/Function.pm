@@ -52,6 +52,11 @@ sub add_eval {
     $self->{block}->add_eval(undef, cast_to("rvalue", $value->{value}));
 }
 
+sub new_const_int {
+    my ($self, $value) = @_;
+    return $self->{backend}->new_const_int($value);
+}
+
 sub new_const_float {
     my ($self, $value) = @_;
     return $self->{backend}->new_const_float($value);
@@ -69,7 +74,7 @@ sub add_assignment {
 
 sub stack_fetch {
     my ($self, $index) = @_;
-    $self->{backend}->eval_shim($self->{block}, "stack_fetch", @$self{"perl", "stack"}, cast_to("rvalue", $index));
+    $self->{backend}->call_shim("stack_fetch", @$self{"perl", "stack"}, cast_to("rvalue", $index))
 }
 
 1;
