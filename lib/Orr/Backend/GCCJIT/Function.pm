@@ -68,8 +68,28 @@ sub new_local {
     $self->{backend}->new_local($self->{fn}, $type, $name);
 }
 
+sub convert_sv_to_float {
+    my ($self, $type, $rval) = @_;
+    return $self->{backend}->call_shim("sv_nv", $self->{perl}, cast_to("rvalue", $rval->{value}));
+}
+
+sub coerce {
+    my ($self, $type, $value) = @_;
+
+    if (my $conv = $self->can("convert_$value->{type}_to_${type}")) {
+        return $self->$conv($type, $value);
+    }
+
+    return $value;
+}
+
 sub add_assignment {
     my ($self, $lval, $rval) = @_;
+
+    $rval = $self->coerce($lval->{type}, $rval);
+
+    die "bad assignment: $lval->{type} = $rval->{type}" unless $lval->{type} eq $rval->{type};
+
     $self->{block}->add_assignment(undef, cast_to("lvalue", $lval->{value}), cast_to("rvalue", $rval->{value}));
 }
 
@@ -85,6 +105,8 @@ my %op = (
 sub new_binary_op {
     my ($self, $name, $type, @args) = @_;
     my $code = $op{$name} or die "unsupported operator $name";
+
+    @args = map $self->coerce($type, $_), @args;
 
     die "bad $name: arguments must be $type"
         unless all { $_->{type} eq $type }, @args;

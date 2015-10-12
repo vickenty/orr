@@ -38,5 +38,7 @@ try "const nv", sub { -1.5e-1 };
 try "sassign", sub { my $x = 42; my $y = $x; $y };
 try "multiply", sub { my $x = 6; my $y = 7; $x * $y; };
 try "sassign argument", sub { my $x = $_[0]; $x }, 42;
+try "coerce on op", sub { $_[0] * $_[1] }, 6, 7;
+try "coerce on sassign", sub { my $x = $_[0]; my $y = $_[1]; $x * $y }, 6, 7;
 
 done_testing;
