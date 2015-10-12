@@ -3,6 +3,7 @@ package Orr::Backend::GCCJIT::Function;
 use strict;
 use warnings;
 
+use List::Util qw/all/;
 use Orr::Backend::GCCJIT::Util qw/cast_to/;
 
 sub create {
@@ -75,6 +76,20 @@ sub add_assignment {
 sub stack_fetch {
     my ($self, $index) = @_;
     $self->{backend}->call_shim("stack_fetch", @$self{"perl", "stack"}, cast_to("rvalue", $index))
+}
+
+my %op = (
+    multiply => GCCJIT::GCC_JIT_BINARY_OP_MULT,
+);
+
+sub new_binary_op {
+    my ($self, $name, $type, @args) = @_;
+    my $code = $op{$name} or die "unsupported operator $name";
+
+    die "bad $name: arguments must be $type"
+        unless all { $_->{type} eq $type }, @args;
+
+    return $self->{backend}->new_binary_op($code, $type, @args);
 }
 
 1;

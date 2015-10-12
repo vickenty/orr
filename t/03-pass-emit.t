@@ -36,6 +36,7 @@ sub try {
 try "const iv", sub { 42 };
 try "const nv", sub { -1.5e-1 };
 try "sassign", sub { my $x = 42; my $y = $x; $y };
+try "multiply", sub { my $x = 6; my $y = 7; $x * $y; };
 try "sassign argument", sub { my $x = $_[0]; $x }, 42;
 
 done_testing;

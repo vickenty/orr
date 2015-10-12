@@ -120,6 +120,8 @@ my %shim_type = (
 
     stack_xpush_sv => [ qw/void perl_ptr stack_ptr sv/ ],
     stack_xpush_nv => [ qw/void perl_ptr stack_ptr nv/ ],
+
+    sv_nv => [ qw/float perl_ptr sv/ ],
 );
 
 sub build_shim {
@@ -169,6 +171,12 @@ sub compile {
 sub get_code {
     my ($self, $result, $name) = @_;
     return $result->get_code($name);
+}
+
+sub new_binary_op {
+    my ($self, $code, $type, @args) = @_;
+    my $value = $self->{ctx}->new_binary_op(undef, $code, $self->get_jit_type($type), map cast_to("rvalue", $_->{value}), @args);
+    return $self->new_value($type, $value);
 }
 
 1;

@@ -67,6 +67,14 @@ $ops{aelemfast} = sub {
     return $env->{fun}->stack_fetch($index->{value});
 };
 
+$ops{multiply} = sub {
+    my ($env, $op) = @_;
+
+    my @args = map walk($env, $_), @{$op->{args}};
+
+    return $env->{fun}->new_binary_op($op->{op}, $op->{type}, @args);
+};
+
 sub process {
     my ($tree, $backend) = @_;
 
