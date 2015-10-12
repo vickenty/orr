@@ -41,7 +41,7 @@ sub auto_push {
 sub return {
     my ($self, @values) = @_;
     my $backend = $self->{backend};
-    
+
     $backend->eval_shim($self->{block}, "stack_prepush", @$self{"perl", "stack"});
     $self->auto_push($_) foreach @values;
     $backend->eval_shim($self->{block}, "stack_putback", @$self{"perl", "stack"});
