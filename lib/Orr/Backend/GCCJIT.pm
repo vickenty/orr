@@ -134,12 +134,14 @@ sub get_shim {
 
 sub call_shim {
     my ($self, $name, @args) = @_;
-    $self->{ctx}->new_call_through_ptr(undef, $self->get_shim($name), cast_to("rvalue", \@args));
+    my $type = $shim_type{$name}->[0];
+    my $value = $self->{ctx}->new_call_through_ptr(undef, $self->get_shim($name), cast_to("rvalue", \@args));
+    return $self->new_value($type, $value);
 }
 
 sub eval_shim {
     my ($self, $block, $name, @args) = @_;
-    $block->add_eval(undef, $self->call_shim($name, @args));
+    $block->add_eval(undef, $self->call_shim($name, @args)->{value});
 }
 
 sub block_end {
