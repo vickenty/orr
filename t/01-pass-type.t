@@ -35,93 +35,91 @@ sub error {
     like exception { Orr::Pass::Type::process($tree) }, qr/^Type/, $name;
 }
 
-my ($x, $y, @a, %h);
-
 types "addition",
-    sub { $x + $y } => "float",
+    sub { my $x + my $y } => "float",
     x => "float",
     y => "float";
 
 types "division",
-    sub { $x / $y } => "float",
+    sub { my $x / my $y } => "float",
     x => "float",
     y => "float";
 
 types "division by num",
-    sub { $x / 2 } => "float",
+    sub { my $x / 2 } => "float",
     x => "float";
 
 error "division by string",
-    sub { $x / "foo" };
+    sub { my $x / "foo" };
 
 types "cond_expr",
-    sub { $a[0] ? $x : $y } => "sv",
+    sub { my (@a, $x, $y); $a[0] ? $x : $y } => "sv",
     x => "sv",
     y => "sv";
 
 types "cond_expr num",
-    sub { $a[0] ? 1 : 2 } => "float";
+    sub { my @a; $a[0] ? 1 : 2 } => "float";
 
 error "cond_expr conflict",
-    sub { $a[0] ? 1 : "foo" };
+    sub { my @a; $a[0] ? 1 : "foo" };
 
 types "propagate into cond_expr",
-    sub { 2 + ($x ? $y : 2) } => "float",
+    sub { 2 + (my $x ? my $y : 2) } => "float",
     x => undef,
     y => "float";
 
 types "array subscript",
-    sub { $a[$y] } => "sv",
+    sub { my (@a, $y); $a[$y] } => "sv",
     y => "float";
 
 types "arrayref subscript",
-    sub { $x->[$y] } => "sv",
+    sub { my ($x, $y); $x->[$y] } => "sv",
     x => "array",
     y => "float";
 
 types "hash get",
-    sub { $h{$y} } => "sv",
+    sub { my (%h, $y); $h{$y} } => "sv",
     y => "string";
 
 types "hashref get",
-    sub { $x->{$y} } => "sv",
+    sub { my ($x, $y); $x->{$y} } => "sv",
     x => "hash",
     y => "string";
 
 types "assign num",
-    sub { $x = 1 } => "float",
+    sub { my $x = 1 } => "float",
     x => "float";
 
 types "assign str",
-    sub { $x = "foo" } => "string",
+    sub { my $x = "foo" } => "string",
     x => "string";
 
 types "assign expr",
-    sub { my $j = $x + $y } => "float",
+    sub { my $j = my $x + my $y } => "float",
     x => "float",
     y => "float",
     j => "float";
 
 types "assign aelem to float",
-    sub { my $i = $a[0]; $i + 1 } => "float",
+    sub { my @a; my $i = $a[0]; $i + 1 } => "float",
     i => "float";
 
 types "assign float to aelem",
-    sub { $a[0] = 1; } => "sv";
+    sub { my @a; $a[0] = 1; } => "sv";
 
 types "sv upgrade",
-    sub { $x = $h{foo}; $x + 1 } => "float",
+    sub { my %h; my $x = $h{foo}; $x + 1 } => "float",
     x => "float";
 
 error "assign conflict",
-    sub { $x = 1; $x = "foo" };
+    sub { my $x = 1; $x = "foo" };
 
 error "bad use",
-    sub { $x + $x->{foo} };
+    sub { my $x; $x + $x->{foo} };
 
 
 types "list assign",
-    sub { my ($h, $j, $k, $l) = (1, "foo", @a); },
+    sub { my @a; my ($h, $j, $k, $l) = (1, "foo", @a); },
     [ "float", "string", "array" ],
     h => "float",
     j => "string",
@@ -151,5 +149,10 @@ types "full: gcd",
     u => "float",
     v => "float",
     t => "float";
+
+my $global;
+types "global scalar",
+    sub { $global }, "sv",
+    global => "sv";
 
 done_testing;

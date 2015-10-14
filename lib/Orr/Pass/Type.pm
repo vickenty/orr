@@ -109,6 +109,8 @@ $ops{padsv} = sub {
     my ($env, $op) = @_;
     my $pe = $op->{pad_entry};
 
+    return $pe->{type} = "sv" if $pe->{outer};
+
     $pe->{type} = $env->{type}
         if ($env->{type} && (!$pe->{type} || $pe->{type} eq "sv"));
 
