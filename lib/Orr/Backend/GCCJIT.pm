@@ -107,6 +107,11 @@ sub new_const_float {
     return $self->new_value("float", $self->{ctx}->new_rvalue_from_double($self->get_jit_type("float"), $value));
 }
 
+sub new_const_sv {
+    my ($self, $value_ref) = @_;
+    return $self->new_value("sv", $self->{ctx}->new_rvalue_from_ptr($self->get_jit_type("sv"), int $value_ref));
+}
+
 sub new_local {
     my ($self, $fun, $type, $name) = @_;
     return $self->new_value($type, $fun->new_local(undef, $self->get_jit_type($type), $name));

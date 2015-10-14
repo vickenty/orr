@@ -57,4 +57,14 @@ try "sassign to \@_", sub { $_[0] = $_[0] * 2 }, [ 4 ],
         return @ret;
     };
 
+my $x = 0;
+try "closure", sub { $x = $x * $_[0] }, [ 7 ],
+    caller => sub {
+        my ($code, $args) = @_;
+        $x = 6;
+        my @ret = $code->(@$args);
+        is $x, 42, "closure: post check";
+        return @ret;
+    };
+
 done_testing;

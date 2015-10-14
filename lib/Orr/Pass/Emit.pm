@@ -51,9 +51,13 @@ $ops{padsv} = sub {
     my ($env, $op) = @_;
 
     my $pe = $op->{pad_entry};
-    die "unsupported outer variable: $pe->{name}" if $pe->{outer};
 
-    return $pe->{lvalue} //= $env->{fun}->new_local($pe->{type}, $pe->{name});
+    if ($pe->{outer}) {
+        # FIXME: Make sure that $pe->{value} lives long enough.
+        return $pe->{rvalue} //= $env->{fun}->new_const_sv($pe->{value});
+    } else {
+        return $pe->{lvalue} //= $env->{fun}->new_local($pe->{type}, $pe->{name});
+    }
 };
 
 $ops{aelemfast} = sub {

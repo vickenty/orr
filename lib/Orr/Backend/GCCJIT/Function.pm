@@ -63,6 +63,15 @@ sub new_const_float {
     return $self->{backend}->new_const_float($value);
 }
 
+# Possibly confusing name: Orr "sv" is what "SV*" in XS, so it's not scalar
+# constant, but rather scalar pointer constant. They are used to refer to
+# scalars that were created elsewhere and are expected to outlive compiled
+# code.
+sub new_const_sv {
+    my ($self, $value_ref) = @_;
+    return $self->{backend}->new_const_sv($value_ref);
+}
+
 sub new_local {
     my ($self, $type, $name) = @_;
     $self->{backend}->new_local($self->{fn}, $type, $name);
