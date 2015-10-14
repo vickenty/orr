@@ -122,6 +122,7 @@ my %shim_type = (
     stack_xpush_nv => [ qw/void perl_ptr stack_ptr nv/ ],
 
     sv_nv => [ qw/float perl_ptr sv/ ],
+    sv_set_nv => [ qw/void perl_ptr sv nv/ ],
 );
 
 sub build_shim {

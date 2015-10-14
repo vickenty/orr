@@ -48,4 +48,13 @@ try "sassign argument", sub { my $x = $_[0]; $x }, [ 42 ];
 try "coerce on op", sub { $_[0] * $_[1] }, [ 6, 7 ];
 try "coerce on sassign", sub { my $x = $_[0]; my $y = $_[1]; $x * $y }, [ 6, 7 ];
 
+try "sassign to \@_", sub { $_[0] = $_[0] * 2 }, [ 4 ],
+    caller => sub {
+        my ($code, $args) = @_;
+        my @args = @$args;
+        my @ret = $code->(@args);
+        is $args[0], 8;
+        return @ret;
+    };
+
 done_testing;
