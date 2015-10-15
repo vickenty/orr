@@ -3,13 +3,7 @@ use warnings;
 
 use Test::More;
 
-use DynaLoader;
-
-use B::ExprTree;
-use Orr::Pass::Type;
-use Orr::Backend::GCCJIT;
-
-use_ok("Orr::Pass::Emit");
+require_ok "Orr";
 
 sub default_caller {
     my ($code, $args) = @_;
@@ -19,21 +13,9 @@ sub default_caller {
 sub try {
     my ($name, $code, $args, %opts) = @_;
 
-    my $backend = Orr::Backend::GCCJIT->new();
-    my $tree = B::ExprTree::build($code);
-    Orr::Pass::Type::process($tree);
-    Orr::Pass::Emit::process($tree, $backend);
-
-    my $res = $backend->compile();
-    my $ptr = $res->get_code("anon");
-
-    my $sub = do {
-        no warnings "redefine";
-        DynaLoader::dl_install_xsub("anon", $ptr);
-    };
+    my $sub = Orr::compile($code);
 
     my $caller = $opts{caller} || \&default_caller;
-
     my @ret = $caller->($sub, $args);
     my @exp = $caller->($code, $args);
 
