@@ -35,7 +35,7 @@ my @cases = (
 
 foreach my $case (@cases) {
     try $case;
-    #try -$case;
+    try -$case;
 }
 
 done_testing;
