@@ -87,11 +87,6 @@ sub new_function {
     return $self->{ctx}->new_function(undef, $kind, $self->get_jit_type($return_type), $name, $params, 0);
 }
 
-sub new_block {
-    my ($self, $function, $name) = @_;
-    return $function->new_block($name);
-}
-
 sub new_value {
     my ($self, $type, $value) = @_;
     return { type => $type, value => $value };

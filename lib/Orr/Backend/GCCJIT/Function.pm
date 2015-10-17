@@ -14,7 +14,7 @@ sub create {
     my $fn = $backend->new_function(void => $name, [ $perl, $cv ]);
     my $stack_value = $fn->new_local(undef, $backend->get_jit_type("stack"), "stack");
     my $stack = $stack_value->get_address(undef);
-    my $block = $backend->new_block($fn, "top");
+    my $block = $fn->new_block("top");
     $backend->eval_shim($block, "stack_init", $perl, $stack);
 
     return bless {
