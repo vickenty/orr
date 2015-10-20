@@ -8,6 +8,22 @@ use Orr::Pass::Type;
 use Orr::Pass::Emit;
 use Orr::Backend::GCCJIT;
 
+package Orr::Sub {
+    my %stash;
+
+    sub new {
+        my ($class, $coderef, $env) = @_;
+        my $self = bless $coderef, $class;
+        $stash{$self} = $env;
+        return $self;
+    }
+
+    sub DESTROY {
+        my $self = shift;
+        delete $stash{$self};
+    }
+}
+
 sub compile {
     my ($code) = @_;
 
@@ -25,7 +41,9 @@ sub compile {
         DynaLoader::dl_install_xsub("Orr::anon_xsub", $ptr);
     };
 
-    return $sub;
+    return Orr::Sub->new($sub, {
+        result => $res,
+    });
 }
 
 1;
