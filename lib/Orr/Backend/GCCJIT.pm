@@ -15,6 +15,7 @@ my %default_typemap = (
     void => GCC_JIT_TYPE_VOID,
     cv => GCC_JIT_TYPE_VOID_PTR,
     nv => GCC_JIT_TYPE_DOUBLE,
+    bool => GCC_JIT_TYPE_BOOL,
 
     perl_ptr => GCC_JIT_TYPE_VOID_PTR,
     void_ptr => GCC_JIT_TYPE_VOID_PTR,
@@ -178,6 +179,21 @@ sub new_binary_op {
     my ($self, $code, $type, @args) = @_;
     my $value = $self->{ctx}->new_binary_op(undef, $code, $self->get_jit_type($type), map cast_to("rvalue", $_->{value}), @args);
     return $self->new_value($type, $value);
+}
+
+my %compare_ops = (
+    eq => GCC_JIT_COMPARISON_EQ,
+    ne => GCC_JIT_COMPARISON_NE,
+);
+
+sub new_comparison {
+    my ($self, $name, $a, $b) = @_;
+    $self->new_value("bool",
+        $self->{ctx}->new_comparison(
+            undef,
+            $compare_ops{$name},
+            cast_to("rvalue", $a->{value}),
+            cast_to("rvalue", $b->{value})));
 }
 
 1;

@@ -79,6 +79,17 @@ $ops{multiply} = sub {
     return $env->{fun}->new_binary_op($op->{op}, $op->{type}, @args);
 };
 
+$ops{cond_expr} = sub {
+    my ($env, $op) = @_;
+
+    return $env->{fun}->new_ternary_op(
+        type => $op->{type},
+        pred => sub { walk($env, $op->{pred}) },
+        then => sub { walk($env, $op->{then}) },
+        else => sub { walk($env, $op->{else}) },
+    );
+};
+
 sub process {
     my ($tree, $backend) = @_;
 

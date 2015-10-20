@@ -102,7 +102,7 @@ $ops{cond_expr} = sub {
 
     assert_type($op, $else, $then);
 
-    return $then;
+    return $op->{type} = $then;
 };
 
 $ops{padsv} = sub {

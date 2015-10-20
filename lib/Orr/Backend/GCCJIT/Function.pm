@@ -82,6 +82,11 @@ sub convert_sv_to_float {
     return $self->{backend}->call_shim("sv_nv", $self->{perl}, cast_to("rvalue", $rval->{value}));
 }
 
+sub convert_float_to_bool {
+    my ($self, $type, $rval) = @_;
+    return $self->{backend}->new_comparison("ne", $rval, $self->{backend}->new_const_float(0));
+}
+
 sub coerce {
     my ($self, $type, $value) = @_;
 
@@ -124,6 +129,34 @@ sub new_binary_op {
         unless all { $_->{type} eq $type }, @args;
 
     return $self->{backend}->new_binary_op($code, $type, @args);
+}
+
+sub new_ternary_op {
+    my ($self, %args) = @_;
+
+    my $pred_value = $self->coerce("bool", $args{pred}->());
+
+    my $id = ++$self->{ternary_op_count};
+
+    my $then_block = $self->{fn}->new_block("ternary_${id}_then");
+    my $else_block = $self->{fn}->new_block("ternary_${id}_else");
+    my $next_block = $self->{fn}->new_block("ternary_${id}_tail");
+
+    my $op_value = $self->new_local($args{type}, "ternary_${id}_value");
+
+    $self->{block}->end_with_conditional(undef, cast_to("rvalue", $pred_value->{value}), $then_block, $else_block);
+
+    $self->{block} = $then_block;
+    $self->add_assignment($op_value, $args{then}->());
+    $then_block->end_with_jump(undef, $next_block);
+
+    $self->{block} = $else_block;
+    $self->add_assignment($op_value, $args{else}->());
+    $else_block->end_with_jump(undef, $next_block);
+
+    $self->{block} = $next_block;
+
+    return $op_value;
 }
 
 1;
