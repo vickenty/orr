@@ -21,6 +21,8 @@ $ops{const} = sub {
     }
 };
 
+$ops{scope} =
+$ops{leave} =
 $ops{lineseq} = sub {
     my ($env, $op) = @_;
 

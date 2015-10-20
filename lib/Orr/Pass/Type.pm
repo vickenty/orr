@@ -32,6 +32,8 @@ sub assert_type {
 
 my %ops;
 
+$ops{leave} =
+$ops{scope} =
 $ops{lineseq} = sub {
     my ($env, $op) = @_;
 
