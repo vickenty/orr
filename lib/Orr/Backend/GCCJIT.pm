@@ -10,6 +10,8 @@ use Ouroboros qw/:all/;
 use Orr::Backend::GCCJIT::Function;
 use Orr::Backend::GCCJIT::Util qw/cast_to/;
 
+use DynaLoader;
+
 my %default_typemap = (
     # Types used internally by the backend.
     void => GCC_JIT_TYPE_VOID,
@@ -123,17 +125,30 @@ my %shim_type = (
     stack_xpush_nv => [ qw/void perl_ptr stack_ptr nv/ ],
 
     sv_nv => [ qw/float perl_ptr sv/ ],
-    sv_set_nv => [ qw/void perl_ptr sv nv/ ],
+
+    sv_setnv => [ qw/void perl_ptr sv nv/ ],
 );
+
+sub get_shim_ptr {
+    my ($self, $name) = @_;
+    if (my $getter = Ouroboros->can("ouroboros_${name}_ptr")) {
+        return $getter->();
+    }
+}
+
+sub get_intr_ptr {
+    my ($self, $name) = @_;
+    DynaLoader::dl_find_symbol(0, "Perl_$name");
+}
 
 sub build_shim {
     my ($self, $name) = @_;
-    my $sig = $shim_type{$name} // die "unsupported shim $name";
+    my $sig = $shim_type{$name} or die "unsupported shim $name";
     my ($return_type, @param) = map $self->get_jit_type($_), @$sig;
 
     my $fn_type = $self->{ctx}->new_function_ptr_type(undef, $return_type, \@param, 0);
-    my $ptr_getter = Ouroboros->can("ouroboros_${name}_ptr") or die "unsupported shim $name";
-    my $fn_ptr = $self->{ctx}->new_rvalue_from_ptr($fn_type, $ptr_getter->());
+    my $ptr = $self->get_shim_ptr($name) // $self->get_intr_ptr($name) // die "unsupported shim $name";
+    my $fn_ptr = $self->{ctx}->new_rvalue_from_ptr($fn_type, $ptr);
     return $fn_ptr;
 }
 
@@ -144,8 +159,9 @@ sub get_shim {
 
 sub call_shim {
     my ($self, $name, @args) = @_;
+    my $shim = $self->get_shim($name);
     my $type = $shim_type{$name}->[0];
-    my $value = $self->{ctx}->new_call_through_ptr(undef, $self->get_shim($name), cast_to("rvalue", \@args));
+    my $value = $self->{ctx}->new_call_through_ptr(undef, $shim, cast_to("rvalue", \@args));
     return $self->new_value($type, $value);
 }
 

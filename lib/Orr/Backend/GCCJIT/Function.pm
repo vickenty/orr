@@ -103,7 +103,7 @@ sub add_assignment {
     $rval = $self->coerce($lval->{type}, $rval);
 
     if ($lval->{type} eq "sv" && $rval->{type} eq "float") {
-        $self->{backend}->eval_shim($self->{block}, "sv_set_nv", $self->{perl}, cast_to("rvalue", $lval->{value}), cast_to("rvalue", $rval->{value}));
+        $self->{backend}->eval_shim($self->{block}, "sv_setnv", $self->{perl}, cast_to("rvalue", $lval->{value}), cast_to("rvalue", $rval->{value}));
     } else {
         die "bad assignment: $lval->{type} = $rval->{type}" unless $lval->{type} eq $rval->{type};
         $self->{block}->add_assignment(undef, cast_to("lvalue", $lval->{value}), cast_to("rvalue", $rval->{value}));
